@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  title       String
+  slug        String      @unique
+  description String?
+  basePrice   Float
+  images      String[]
+  mockupUrl   String?
+  tags        String[]
+  featured    Boolean     @default(false)
+  active      Boolean     @default(true)
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  variants    Variant[]
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Variant {
+  id         String      @id @default(cuid())
+  productId  String
+  product    Product     @relation(fields: [productId], references: [id])
+  color      String
+  colorHex   String
+  size       String
+  stock      Int         @default(999)
+  printfulId String?
+  orderItems OrderItem[]
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  status          OrderStatus @default(PENDING)
+  customerName    String
+  customerEmail   String
+  customerPhone   String?
+  shippingAddress Json
+  subtotal        Float
+  shippingCost    Float       @default(0)
+  total           Float
+  currency        String      @default("USD")
+  paymentMethod   String?
+  paymentId       String?
+  printfulOrderId String?
+  isCustom        Boolean     @default(false)
+  customNote      String?
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  variantId String
+  variant   Variant @relation(fields: [variantId], references: [id])
+  quantity  Int
+  price     Float
+}
+
+model CustomRequest {
+  id           String   @id @default(cuid())
+  name         String
+  email        String
+  phone        String?
+  description  String
+  referenceUrl String?
+  budget       String?
+  status       String   @default("pending")
+  createdAt    DateTime @default(now())
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
